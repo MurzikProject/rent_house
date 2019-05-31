@@ -256,9 +256,8 @@ def model_comparison_chart(dataset,value):
 #==============================================================================
 
 # Считываем данные в датафрейм
-#rent_clients = pd.read_csv('/home/varvara/anton/projects/9_rent_house/ipoteka_clid_20190412_rem.csv', encoding = "ISO-8859-1")
-#rent_clients = pd.read_csv('D:/Models/9_rent_house/ipoteka_clid_20190412_rem.csv', low_memory=False, encoding = "ISO-8859-1")
-rent_clients = pd.read_csv('/home/anton/Projects/python/9_rent_house/ipoteka_clid_20190412_rem.csv', encoding = "ISO-8859-1")
+#rent_clients = pd.read_csv('D:/Models/development/9_rent_house/ipoteka_clid_20190412_rem.csv', low_memory=False, encoding = "ISO-8859-1")
+rent_clients = pd.read_csv('/home/anton/Projects/python/development/9_rent_house/ipoteka_clid_20190412_rem.csv', encoding = "ISO-8859-1")
 
 rent_clients.shape
 
@@ -519,7 +518,7 @@ new_features = pd.DataFrame(new_features)
 new_features.columns = new_train_features.columns
 
 client_100 = pd.DataFrame()
-client_100 = new_features[:100000]
+client_100 = new_features[:101]
 client_100.shape
 client_100.head()
 
@@ -538,6 +537,6 @@ part_rent_clients(exit_data,exit_data['PRED'])
 
 print(exit_data[exit_data['PRED']==0])
 
-#exit_data.to_csv('/home/varvara/anton/projects/9_rent_house/check_property/ready100.csv', sep='\t', encoding='utf-8')
-exit_data.to_csv('D:/Models/9_rent_house/check_property/ready300000.csv', sep='\t', encoding='utf-8')
+exit_data.to_csv('/home/anton/Projects/python/development/9_rent_house/check_property/ready300000.csv', sep='\t', encoding='utf-8')
+#exit_data.to_csv('D:/Models/development/9_rent_house/check_property/ready300000.csv', sep='\t', encoding='utf-8')
 
