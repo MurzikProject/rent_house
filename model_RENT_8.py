@@ -518,7 +518,7 @@ new_features = pd.DataFrame(new_features)
 new_features.columns = new_train_features.columns
 
 client_100 = pd.DataFrame()
-client_100 = new_features[:101]
+client_100 = new_features[:201]
 client_100.shape
 client_100.head()
 
