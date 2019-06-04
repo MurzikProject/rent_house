@@ -483,7 +483,7 @@ plt.show()
 # Считываем данные проверки модели в датафрейм
 #model_rent_clients = pd.read_csv('/home/varvara/anton/projects/9_rent_house/check_property/check_property_model_clid_20190524.csv', encoding = "ISO-8859-1")
 #model_rent_clients = pd.read_csv('D:/Models/9_rent_house/check_property/check_property_model_clid_20190527.csv', low_memory=False, encoding = "ISO-8859-1")
-model_rent_clients = pd.read_csv('/home/anton/Projects/python/9_rent_house/check_property/check_property_model_clid_20190527.csv', encoding = "ISO-8859-1")
+model_rent_clients = pd.read_csv('/home/anton/Projects/python/development/9_rent_house/check_property/check_property_model_clid_20190527.csv', encoding = "ISO-8859-1")
 
 model_rent_clients.head()
 model_rent_clients.shape
@@ -524,17 +524,20 @@ client_100.head()
 
 y = client_100['REP_CLID']
 x = client_100.drop(columns = ['REP_CLID'])
-exit_data = pd.DataFrame(columns = ['CLID','PRED'])
+exit_data = pd.DataFrame(columns = ['CLID','PRED','PROB'])
 
 for i in range(len(y)):
     z = logreg.predict(x[i:i+1])
+    proba = logreg.predict_proba(x[i:i+1])
     exit_data.loc[i,'CLID'] = (y[i])
     exit_data.loc[i,'PRED'] = z[0].astype(int)
+    exit_data.loc[i,'PROB'] = proba
 
 exit_data.shape
 exit_data.head()
 part_rent_clients(exit_data,exit_data['PRED'])
 
+print(exit_data)
 print(exit_data[exit_data['PRED']==0])
 
 exit_data.to_csv('/home/anton/Projects/python/development/9_rent_house/check_property/ready300000.csv', sep='\t', encoding='utf-8')
