@@ -479,6 +479,70 @@ plt.legend(loc="lower right")
 plt.savefig('Log_ROC')
 plt.show()
 
+# =============================================================================
+# Проверим работоспособность модели на клиентах, оформивших ипотеку
+# после построения модели.
+# =============================================================================
+# Считываем данные проверки модели в датафрейм
+check_rent_clients = pd.read_csv('/home/anton/Projects/python/development/9_rent_house/check_property/real_check_property_model_clid_20190605.csv', encoding = "ISO-8859-1")
+
+check_rent_clients.head()
+check_rent_clients.shape
+
+# Удалим ненужные поля ай-ди клиентов
+check_rent_clients = check_rent_clients.drop(['CLID_CRM','CLID_TRAN'], axis=1)
+
+# Заменим все значиения "Not Available" на np.nan
+check_rent_clients = check_rent_clients.replace({'Not Available': np.nan})
+
+# Предобработаем все категориальные предикторы
+new_categorical_features = check_rent_clients.select_dtypes(include=[np.object])
+new_categorical_features.shape
+
+# Обработаем категориальные признаки с помощью LabelEncoder
+z = len(new_categorical_features.columns)
+for x in range(0,z):
+    new_categorical_features.iloc[:,x] = labelencoder.fit_transform(new_categorical_features.iloc[:,x].values.astype(str))
+
+# Выделим все вещественные предикторы 
+new_numeric_features = check_rent_clients.select_dtypes(include = [np.number])
+
+# соединяем категориальные и количественные признаки
+new_features = pd.concat([new_numeric_features, new_categorical_features], axis = 1)
+new_features.shape
+new_features.head()
+
+# Заполним отсутствующие данные медианными значениями
+new_train_features = new_features
+new_features = imp_mean.fit_transform(new_train_features)
+new_features = pd.DataFrame(new_features)
+new_features.columns = new_train_features.columns
+
+# Получаем итоговый датафрейм для анализа
+client_100 = pd.DataFrame()
+client_100 = new_features
+client_100.shape
+client_100.head()
+
+# Создаем итоговую таблицу с ай-ди клиентов расчитанными значениями 
+y = client_100['REP_CLID']
+x = client_100.drop(columns = ['REP_CLID'])
+exit_data = pd.DataFrame(columns = ['CLID','PRED'])
+
+# Заполним итоговую таблицу готовыми значениями
+for i in range(len(y)):
+    z = logreg.predict(x[i:i+1])
+    exit_data.loc[i,'CLID'] = (y[i])
+    exit_data.loc[i,'PRED'] = z[0].astype(int)
+
+# Посмотрим на распределение расчитанных значений и отклонение от рельных значений
+exit_data.shape
+exit_data.head()
+part_rent_clients(exit_data,exit_data['PRED'])
+
+
+
+
 
 # Считываем данные проверки модели в датафрейм
 #model_rent_clients = pd.read_csv('/home/varvara/anton/projects/9_rent_house/check_property/check_property_model_clid_20190524.csv', encoding = "ISO-8859-1")

@@ -47,9 +47,9 @@ def part_rent_clients(dataset,score):
     print('Доля класса "оформил ипотеку": '+ str((part_score[1])*100)+ ' %')
     print('Доля класса "не оформил ипотеку": '+ str((part_score[0])*100)+ ' %')
     
-    sns.countplot(x='IPOTEKA',data=dataset,palette='hls')
+    sns.countplot(x=score,data=dataset,palette='hls')
     plt.show
-
+    
    
 # 3. Анализ заполнения признаков данными
 def missing_values_table(dataset):
@@ -172,17 +172,21 @@ def StraitKFold(classifier, X, y):
     y_tests = pd.DataFrame()
     y_pred = pd.DataFrame() 
     f1 = np.array([])
+    accuracy = np.array([])
     n = 0
     for train_index, test_index in skf.split(X, y):
         classifier.fit(X.iloc[train_index, :], y.iloc[train_index, 0])
         y_scores['fold_'+str(n)] = classifier.decision_function(X.iloc[test_index, :])
         y_pred['fold_'+str(n)] = classifier.predict(X.iloc[test_index, :])
         y_tests['fold_'+str(n)] = y.iloc[test_index, 0].values
-        f1 = np.append(f1, metrics.f1_score(y.iloc[test_index, 0], y_pred.iloc[:,n])) 
+        f1 = np.append(f1, metrics.f1_score(y.iloc[test_index, 0], y_pred.iloc[:,n]))
+        accuracy = np.append(f1, metrics.accuracy_score(y.iloc[test_index, 0], y_pred.iloc[:,n]))
         n += 1
     f1_score = np.mean(f1)
+    accuracy = np.mean(accuracy)
+    print('mean accuracy score: '+str(accuracy))
     print('mean f1 score: '+str(f1_score))
-    return y_scores, y_tests, f1_score
+    return y_scores, y_tests, accuracy, f1_score
 
 # 10. Функция построения AUC_ROC  
 def ROC(y_scores, y_test):
@@ -204,7 +208,7 @@ def ROC(y_scores, y_test):
     plt.legend(loc="lower right")
     plt.title('Mean ROC area={0:0.3f}'.format(Mean_ROC.mean()))
     plt.show()
-    
+
 # 11. Функция построения графика сравнения производительности
 def model_comparison_chart(dataset,value):
     plt.style.use('fivethirtyeight')
@@ -213,7 +217,7 @@ def model_comparison_chart(dataset,value):
     dataset.sort_values(value, ascending = False).plot(x = 'model',
                                                        y = value,
                                                        kind = 'barh',
-                                                       color = 'red',
+                                                       color = 'green',
                                                        edgecolor = 'black')
      
     plt.ylabel('Models')
@@ -221,7 +225,7 @@ def model_comparison_chart(dataset,value):
     plt.xlabel(value)
     plt.xticks(size = 14)
     plt.xlim([0.0, 1.05])
-    plt.title('Model Comparison (Cross-Validation) on f1_score', size = 20)
+    plt.title('Model comparison (cross-validation) on '+value, size = 20)
 
 #==============================================================================
 # 1. DATA CLEANING AND FORMATTING
@@ -229,8 +233,8 @@ def model_comparison_chart(dataset,value):
 
 # Считываем данные в датафрейм
 #rent_clients = pd.read_csv('/home/varvara/anton/projects/9_rent_house/ipoteka_clid_20190412_rem.csv', encoding = "ISO-8859-1")
-rent_clients = pd.read_csv('D:/Models/development/9_rent_house/ipoteka_living_20190519_rem.csv', low_memory=False, encoding = "ISO-8859-1")
-#rent_clients = pd.read_csv('/home/anton/Projects/Python/9_rent_house/ipoteka_clid_rem.csv', encoding = "ISO-8859-1")
+#rent_clients = pd.read_csv('D:/Models/development/9_rent_house/ipoteka_living_20190519_rem.csv', low_memory=False, encoding = "ISO-8859-1")
+rent_clients = pd.read_csv('/home/anton/Projects/python/development/9_rent_house/ipoteka_living_20190519_rem.csv', encoding = "ISO-8859-1")
 
 rent_clients.shape
 
@@ -387,27 +391,32 @@ y_train.shape
 model_comparison = pd.DataFrame({'model': ['Logistic Regression',
                                            'Ridge Classifier',
                                            'Gradient Boosting'],
-                                 'f1_score': [0.0,0.0,0.0]})
+                                           'accuracy': [0.0,0.0,0.0],
+                                           'f1_score': [0.0,0.0,0.0]})
 
 # Logistic Regression
 logReg = linear_model.LogisticRegression()
-y_scores, y_tests, model_comparison['f1_score'][0] = StraitKFold(logReg, X_train, y_train)
+y_scores, y_tests, model_comparison['accuracy'][0], model_comparison['f1_score'][0] = StraitKFold(logReg, X_train, y_train)
 ROC(y_scores, y_tests)
 
 # Ridge classifier
 ridge = linear_model.RidgeClassifier(random_state=2)
-y_scores, y_tests, model_comparison['f1_score'][1] = StraitKFold(ridge, X_train, y_train)
+y_scores, y_tests, model_comparison['accuracy'][1], model_comparison['f1_score'][1] = StraitKFold(ridge, X_train, y_train)
 ROC(y_scores, y_tests)
 
 # градиентный бустинг:
 gradBoost = ensemble.GradientBoostingClassifier()
-y_scores, y_tests, model_comparison['f1_score'][2] = StraitKFold(gradBoost, X_train, y_train)
+y_scores, y_tests, model_comparison['accuracy'][2], model_comparison['f1_score'][2] = StraitKFold(gradBoost, X_train, y_train)
 ROC(y_scores, y_tests)
 
-# Сравним производительность всех моделей
-model_comparison_chart(model_comparison,'f1_score')
-
+# ПОсмотрим на матрицу с показателями производительности
 model_comparison.head()
+
+# Сравним производительность всех моделей по метрике accuracy
+model_comparison_chart(model_comparison,'accuracy')
+
+# Сравним производительность всех моделей по метрике f1_score
+model_comparison_chart(model_comparison,'f1_score')
 
 
 # =============================================================================
@@ -505,3 +514,64 @@ plt.title('ROC')
 plt.legend(loc="lower right")
 plt.savefig('Ridge_ROC')
 plt.show()
+
+# =============================================================================
+# Проверим работоспособность модели на клиентах, оформивших ипотеку
+# после построения модели.
+# =============================================================================
+# Считываем данные проверки модели в датафрейм
+check_rent_clients = pd.read_csv('/home/anton/Projects/python/development/9_rent_house/check_living/real_check_living_model_clid_20190605.csv', encoding = "ISO-8859-1")
+
+check_rent_clients.head()
+check_rent_clients.shape
+
+# Удалим ненужные поля ай-ди клиентов
+check_rent_clients = check_rent_clients.drop(['CLID_CRM','CLID_TRAN'], axis=1)
+
+# Заменим все значиения "Not Available" на np.nan
+check_rent_clients = check_rent_clients.replace({'Not Available': np.nan})
+
+# Предобработаем все категориальные предикторы
+new_categorical_features = check_rent_clients.select_dtypes(include=[np.object])
+new_categorical_features.shape
+
+# Обработаем категориальные признаки с помощью LabelEncoder
+z = len(new_categorical_features.columns)
+for x in range(0,z):
+    new_categorical_features.iloc[:,x] = labelencoder.fit_transform(new_categorical_features.iloc[:,x].values.astype(str))
+
+# Выделим все вещественные предикторы 
+new_numeric_features = check_rent_clients.select_dtypes(include = [np.number])
+
+# соединяем категориальные и количественные признаки
+new_features = pd.concat([new_numeric_features, new_categorical_features], axis = 1)
+new_features.shape
+new_features.head()
+
+# Заполним отсутствующие данные медианными значениями
+new_train_features = new_features
+new_features = imp_mean.fit_transform(new_train_features)
+new_features = pd.DataFrame(new_features)
+new_features.columns = new_train_features.columns
+
+# Получаем итоговый датафрейм для анализа
+client_100 = pd.DataFrame()
+client_100 = new_features
+client_100.shape
+client_100.head()
+
+# Создаем итоговую таблицу с ай-ди клиентов расчитанными значениями 
+y = client_100['REP_CLID']
+x = client_100.drop(columns = ['REP_CLID'])
+exit_data = pd.DataFrame(columns = ['CLID','PRED'])
+
+# Заполним итоговую таблицу готовыми значениями
+for i in range(len(y)):
+    z = gradBoost.predict(x[i:i+1])
+    exit_data.loc[i,'CLID'] = (y[i])
+    exit_data.loc[i,'PRED'] = z[0].astype(int)
+
+# Посмотрим на распределение расчитанных значений и отклонение от рельных значений
+exit_data.shape
+exit_data.head()
+part_rent_clients(exit_data,exit_data['PRED'])
