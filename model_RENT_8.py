@@ -484,7 +484,8 @@ plt.show()
 # после построения модели.
 # =============================================================================
 # Считываем данные проверки модели в датафрейм
-check_rent_clients = pd.read_csv('/home/anton/Projects/python/development/9_rent_house/check_property/real_check_property_model_clid_20190605.csv', encoding = "ISO-8859-1")
+check_rent_clients = pd.read_csv('/home/anton/Projects/python/development/9_rent_house/check_property/real_check_property_model_clid_20190613.csv', encoding = "ISO-8859-1")
+#check_rent_clients = pd.read_csv('D:/Models/development/9_rent_house/check_property/real_check_property_model_clid_20190613.csv', encoding = "ISO-8859-1")
 
 check_rent_clients.head()
 check_rent_clients.shape
