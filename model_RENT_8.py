@@ -23,6 +23,7 @@ sns.set(style="white")
 sns.set(style="whitegrid", color_codes=True)
 from sklearn import preprocessing
 from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.impute import SimpleImputer
@@ -256,8 +257,8 @@ def model_comparison_chart(dataset,value):
 #==============================================================================
 
 # Считываем данные в датафрейм
-#rent_clients = pd.read_csv('D:/Models/development/9_rent_house/ipoteka_clid_20190412_rem.csv', low_memory=False, encoding = "ISO-8859-1")
-rent_clients = pd.read_csv('/home/anton/Projects/python/development/9_rent_house/ipoteka_clid_20190412_rem.csv', encoding = "ISO-8859-1")
+rent_clients = pd.read_csv('D:/Models/development/9_rent_house/data_property/ipoteka_clid_20190412_zayavka.csv', low_memory=False, encoding = "ISO-8859-1")
+#rent_clients = pd.read_csv('/home/anton/Projects/python/development/9_rent_house/ipoteka_clid_20190412_rem.csv', encoding = "ISO-8859-1")
 
 rent_clients.shape
 
@@ -310,8 +311,41 @@ features.shape
 # =============================================================================
 # 2. FEATURE ENGINEERING AND SELECTION
 # =============================================================================
+# =============================================================================
+# Первый вариант посмотреть на влияние признаков - все признаки прогнать на 
+# разницу абсолютных значений мат ожиданий.
+# =============================================================================
+corr_columns = list(features.drop(columns = ['IPOTEKA']).columns)
+corr_values = []
+nan_values = []
+
+for (i, column) in enumerate(corr_columns):
+    value = correl_calc(features[column])
+    if np.isnan(value):
+        nan_values.append(column)
+    else:
+        corr_values.append((column,np.abs(value)))
+
+# для удобства из списка (corr_values) создадим dataframe 'corr_data':
+corr_data = pd.DataFrame(corr_values, columns = ['Feature' , 'corr_value'])
+
+# отсортируем и выведем топ-50 признаков:
+sort_corr_data = corr_data.sort_values(by=['corr_value'], ascending=False)
+top_sort_corr_data = sort_corr_data[:50]
+top_sort_corr_data
 
 # =============================================================================
+# Конструируем новый датасет со всеми объектами и 50 отобранными предикторами
+# =============================================================================
+features_final = features['IPOTEKA']
+
+for i in top_sort_corr_data['Feature']:
+    features_final = pd.concat([features_final, features[i]],axis=1, sort=False)
+
+features_final.shape
+
+# =============================================================================
+# Второй вариант посмотреть на влияние признаков - отдельно вещественных и категориальных.
 # Посмотрим на влияние вещественных признаков на целевую переменную
 # =============================================================================
 number_corr_columns = list(numeric_features.drop(columns = ['IPOTEKA']).columns)
@@ -400,6 +434,12 @@ imp_mean = SimpleImputer(missing_values=np.nan, strategy='median')
 X_train = imp_mean.fit_transform(train_features)
 X_test = imp_mean.transform(test_features)
 
+# Отмасштабируем признаки с помощью Стандартизации
+scaler = StandardScaler() 
+scaler.fit(X_train)
+X_train = scaler.transform(X_train)
+X_test = scaler.transform(X_test)
+
 # Проверим количесвто пустых значений в тестовом и обучающем датасете
 print('Missing values in training features: ', np.sum(np.isnan(X_train)))
 print('Missing values in testing features:  ', np.sum(np.isnan(X_test)))
@@ -484,8 +524,8 @@ plt.show()
 # после построения модели.
 # =============================================================================
 # Считываем данные проверки модели в датафрейм
-check_rent_clients = pd.read_csv('/home/anton/Projects/python/development/9_rent_house/check_property/real_check_property_model_clid_20190613.csv', encoding = "ISO-8859-1")
-#check_rent_clients = pd.read_csv('D:/Models/development/9_rent_house/check_property/real_check_property_model_clid_20190613.csv', encoding = "ISO-8859-1")
+#check_rent_clients = pd.read_csv('/home/anton/Projects/python/development/9_rent_house/check_property/real_check_property_model_clid_20190620.csv', encoding = "ISO-8859-1")
+check_rent_clients = pd.read_csv('D:/Models/development/9_rent_house/check_property/real_check_property_model_clid_20190620.csv', encoding = "ISO-8859-1")
 
 check_rent_clients.head()
 check_rent_clients.shape

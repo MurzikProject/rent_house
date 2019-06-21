@@ -20,8 +20,11 @@ import seaborn as sns
 sns.set(font_scale = 2)
 sns.set(style="white")
 sns.set(style="whitegrid", color_codes=True)
+import scipy.interpolate
+import scipy.integrate
 from sklearn import preprocessing
 from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import Imputer
@@ -227,6 +230,20 @@ def model_comparison_chart(dataset,value):
     plt.xlim([0.0, 1.05])
     plt.title('Model comparison (cross-validation) on '+value, size = 20)
 
+# 12. Расчет коэффициента GINI
+def gini(actual,pred):
+    assert (len(actual)==len(pred))
+    all = np.asarray(np.c_[actual,pred,np.arange(len(actual))], dtype=np.float)
+    all = all[np.lexsort((all[:,2],-1*all[:,1]))]
+    totalLosses = all[:,0].sum()
+    giniSum = all[:,0].cumsum().sum()/totalLosses
+        
+    giniSum -= (len(actual)+1)/2
+    return giniSum/len(actual)
+
+# 13. Расчет нормализированного коэффициента GINI
+def gini_normalized(actual,pred):
+    return gini(actual,pred)/gini(actual,actual)
 #==============================================================================
 # 1. DATA CLEANING AND FORMATTING
 #==============================================================================
@@ -234,7 +251,7 @@ def model_comparison_chart(dataset,value):
 # Считываем данные в датафрейм
 #rent_clients = pd.read_csv('/home/varvara/anton/projects/9_rent_house/ipoteka_clid_20190412_rem.csv', encoding = "ISO-8859-1")
 #rent_clients = pd.read_csv('D:/Models/development/9_rent_house/ipoteka_living_20190519_rem.csv', low_memory=False, encoding = "ISO-8859-1")
-rent_clients = pd.read_csv('/home/anton/Projects/python/development/9_rent_house/ipoteka_living_20190519_rem.csv', encoding = "ISO-8859-1")
+rent_clients = pd.read_csv('/home/anton/Projects/python/development/9_rent_house/data_living/ipoteka_living_20190519_zayavka.csv', low_memory=False, encoding = "ISO-8859-1")
 
 rent_clients.shape
 
@@ -281,11 +298,45 @@ categorical_features.shape
 features = pd.concat([numeric_features, categorical_features], axis = 1)
 features.shape
 
-# =============================================================================
+# ==============================================scores===============================
 # 2. FEATURE ENGINEERING AND SELECTION
 # =============================================================================
 
 # =============================================================================
+# Первый вариант посмотреть на влияние признаков - все признаки прогнать на 
+# разницу абсолютных значений мат ожиданий.
+# =============================================================================
+corr_columns = list(features.drop(columns = ['IPOTEKA']).columns)
+corr_values = []
+nan_values = []
+
+for (i, column) in enumerate(corr_columns):
+    value = correl_calc(features[column])
+    if np.isnan(value):
+        nan_values.append(column)
+    else:
+        corr_values.append((column,np.abs(value)))
+
+# для удобства из списка (corr_values) создадим dataframe 'corr_data':
+corr_data = pd.DataFrame(corr_values, columns = ['Feature' , 'corr_value'])
+
+# отсортируем и выведем топ-50 признаков:
+sort_corr_data = corr_data.sort_values(by=['corr_value'], ascending=False)
+top_sort_corr_data = sort_corr_data[:50]
+top_sort_corr_data
+
+# =============================================================================
+# Конструируем новый датасет со всеми объектами и 50 отобранными предикторами
+# =============================================================================
+features_final = features['IPOTEKA']
+
+for i in top_sort_corr_data['Feature']:
+    features_final = pd.concat([features_final, features[i]],axis=1, sort=False)
+
+features_final.shape
+
+# =============================================================================
+# Второй вариант посмотреть на влияние признаков - отдельно вещественных и категориальных.
 # Посмотрим на влияние вещественных признаков на целевую переменную
 # =============================================================================
 number_corr_columns = list(numeric_features.drop(columns = ['IPOTEKA']).columns)
@@ -304,7 +355,7 @@ number_corr_data = pd.DataFrame(number_corr_values, columns = ['Feature' , 'corr
 
 # отсортируем и выведем топ-20 вещественных признаков:
 sort_number_corr_data = number_corr_data.sort_values(by=['corr_value'], ascending=False)
-top20_number_sort_corr_data = sort_number_corr_data[:20]
+top20_number_sort_corr_data = sort_number_corr_dscoresata[:20]
 top20_number_sort_corr_data
 
 # для вышеприведенных 20 вещественных признаков построим распределение в разрезе классов
@@ -323,6 +374,10 @@ for (i, column) in enumerate(object_corr_columns):
         object_nan_values.append(column)
     else:
         object_corr_values.append((column,np.abs(value)))
+gini_predictions = gini(y_tests,y_scores)
+gini_max = gini(y_tests,y_tests)
+ngini = gini_normalized(y_tests,y_scores)
+print('Gini: %.3f, Max.Gini: %.3f, Normalized Gini: %.3f' % (gini_predictions,gini_max,ngini))
 
 # для удобства из списка (corr_values) создадим dataframe 'corr_data':
 object_corr_data = pd.DataFrame(object_corr_values, columns = ['Feature' , 'corr_value'])
@@ -343,11 +398,15 @@ for x in categorical_features_columns:
 # =============================================================================
 features_final = features['IPOTEKA']
 
-for i in top20_number_sort_corr_data['Feature']:
+for i in top20_number_sort_corr_data['Feature']:scores
     features_final = pd.concat([features_final, features[i]],axis=1, sort=False)
 
 for i in top20_object_sort_corr_data['Feature']:
-    features_final = pd.concat([features_final, features[i]],axis=1, sort=False)
+    features_fgini_predictions = gini(y_tests,y_scores)
+gini_max = gini(y_tests,y_tests)
+ngini = gini_normalized(y_tests,y_scores)
+print('Gini: %.3f, Max.Gini: %.3f, Normalized Gini: %.3f' % (gini_predictions,gini_max,ngini))
+inal = pd.concat([features_final, features[i]],axis=1, sort=False)
 
 features_final.shape
 
@@ -371,6 +430,12 @@ test_features = X_test
 imp_mean = SimpleImputer(missing_values=np.nan, strategy='median')
 X_train = imp_mean.fit_transform(train_features)
 X_test = imp_mean.transform(test_features)
+
+# Отмасштабируем признаки с помощью Стандартизации
+scaler = StandardScaler() 
+scaler.fit(X_train)
+X_train = scaler.transform(X_train)
+X_test = scaler.transform(X_test)
 
 # Проверим количесвто пустых значений в тестовом и обучающем датасете
 print('Missing values in training features: ', np.sum(np.isnan(X_train)))
@@ -440,8 +505,7 @@ print(classification_report(y_test, y_pred))
 logit_roc_auc = roc_auc_score(y_test, logreg.predict(X_test))
 fpr, tpr, thresholds = roc_curve(y_test, logreg.predict_proba(X_test)[:,1])
 plt.figure()
-plt.plot(fpr, tpr, label='Logistic Regression (area = %0.2f)' % logit_roc_auc)
-plt.plot([0, 1], [0, 1],'r--')
+plt.plot(fpr, tpr, label='Logistic Regression (area = %0.2f)' % logit_roc_auc)plt.plot([0, 1], [0, 1],'r--')
 plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.05])
 plt.xlabel('False Positive Rate')
@@ -483,6 +547,12 @@ plt.legend(loc="lower right")
 plt.savefig('GradBoost_ROC')
 plt.show()
 
+gini_predictions = gini(y_test,gradBoost.predict(X_test))
+gini_max = gini(y_test,y_test)
+ngini = gini_normalized(y_test,gradBoost.predict(X_test))
+print('Gini: %.5f, Max.Gini: %.5f, Normalized Gini: %.5f' % (gini_predictions,gini_max,ngini))
+
+
 # =============================================================================
 # Третья модель - RidgeClassifier
 # =============================================================================
@@ -520,7 +590,7 @@ plt.show()
 # после построения модели.
 # =============================================================================
 # Считываем данные проверки модели в датафрейм
-check_rent_clients = pd.read_csv('/home/anton/Projects/python/development/9_rent_house/check_living/real_check_living_model_clid_20190613.csv', encoding = "ISO-8859-1")
+check_rent_clients = pd.read_csv('/home/anton/Projects/python/development/9_rent_house/check_living/real_check_living_model_clid_20190620.csv', low_memory=False, encoding = "ISO-8859-1")
 #check_rent_clients = pd.read_csv('D:/Models/development/9_rent_house/check_living/real_check_living_model_clid_20190613.csv', encoding = "ISO-8859-1")
 
 check_rent_clients.head()
