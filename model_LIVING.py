@@ -250,8 +250,8 @@ def gini_normalized(actual,pred):
 
 # Считываем данные в датафрейм
 #rent_clients = pd.read_csv('/home/varvara/anton/projects/9_rent_house/ipoteka_clid_20190412_rem.csv', encoding = "ISO-8859-1")
-#rent_clients = pd.read_csv('D:/Models/development/9_rent_house/ipoteka_living_20190519_rem.csv', low_memory=False, encoding = "ISO-8859-1")
-rent_clients = pd.read_csv('/home/anton/Projects/python/development/9_rent_house/data_living/ipoteka_living_20190519_zayavka.csv', low_memory=False, encoding = "ISO-8859-1")
+rent_clients = pd.read_csv('D:/Models/development/9_rent_house/data_living/ipoteka_living_20190519_zayavka.csv', low_memory=False, encoding = "ISO-8859-1")
+#rent_clients = pd.read_csv('/home/anton/Projects/python/development/9_rent_house/data_living/ipoteka_living_20190519_zayavka.csv', low_memory=False, encoding = "ISO-8859-1")
 
 rent_clients.shape
 
@@ -402,11 +402,7 @@ for i in top20_number_sort_corr_data['Feature']:scores
     features_final = pd.concat([features_final, features[i]],axis=1, sort=False)
 
 for i in top20_object_sort_corr_data['Feature']:
-    features_fgini_predictions = gini(y_tests,y_scores)
-gini_max = gini(y_tests,y_tests)
-ngini = gini_normalized(y_tests,y_scores)
-print('Gini: %.3f, Max.Gini: %.3f, Normalized Gini: %.3f' % (gini_predictions,gini_max,ngini))
-inal = pd.concat([features_final, features[i]],axis=1, sort=False)
+    features_final = pd.concat([features_final, features[i]],axis=1, sort=False)
 
 features_final.shape
 

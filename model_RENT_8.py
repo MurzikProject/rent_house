@@ -251,6 +251,21 @@ def model_comparison_chart(dataset,value):
     plt.xticks(size = 14)
     plt.xlim([0.0, 1.05])
     plt.title('Model comparison (cross-validation) on '+value, size = 20)
+    
+# 12. Расчет коэффициента GINI
+def gini(actual,pred):
+    assert (len(actual)==len(pred))
+    all = np.asarray(np.c_[actual,pred,np.arange(len(actual))], dtype=np.float)
+    all = all[np.lexsort((all[:,2],-1*all[:,1]))]
+    totalLosses = all[:,0].sum()
+    giniSum = all[:,0].cumsum().sum()/totalLosses
+        
+    giniSum -= (len(actual)+1)/2
+    return giniSum/len(actual)
+
+# 13. Расчет нормализированного коэффициента GINI
+def gini_normalized(actual,pred):
+    return gini(actual,pred)/gini(actual,actual)
 
 #==============================================================================
 # 1. DATA CLEANING AND FORMATTING
@@ -519,6 +534,11 @@ plt.legend(loc="lower right")
 plt.savefig('Log_ROC')
 plt.show()
 
+gini_predictions = gini(y_test,logreg.predict(X_test))
+gini_max = gini(y_test,y_test)
+ngini = gini_normalized(y_test,logreg.predict(X_test))
+print('Gini: %.5f, Max.Gini: %.5f, Normalized Gini: %.5f' % (gini_predictions,gini_max,ngini))
+
 # =============================================================================
 # Проверим работоспособность модели на клиентах, оформивших ипотеку
 # после построения модели.
@@ -647,4 +667,5 @@ print(exit_data[exit_data['PRED']==0])
 
 exit_data.to_csv('/home/anton/Projects/python/development/9_rent_house/check_property/ready300000.csv', sep='\t', encoding='utf-8')
 #exit_data.to_csv('D:/Models/development/9_rent_house/check_property/ready300000.csv', sep='\t', encoding='utf-8')
+
 
