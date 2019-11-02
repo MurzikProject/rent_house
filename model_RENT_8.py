@@ -544,8 +544,8 @@ print('Gini: %.5f, Max.Gini: %.5f, Normalized Gini: %.5f' % (gini_predictions,gi
 # после построения модели.
 # =============================================================================
 # Считываем данные проверки модели в датафрейм
-#check_rent_clients = pd.read_csv('/home/anton/Projects/python/development/9_rent_house/check_property/real_check_property_model_clid_20190620.csv', encoding = "ISO-8859-1")
-check_rent_clients = pd.read_csv('D:/Models/development/9_rent_house/check_property/real_check_property_model_clid_20190620.csv', encoding = "ISO-8859-1")
+check_rent_clients = pd.read_csv('/home/anton/Projects/python/development/9_rent_house/check_property/rreal_check_property_model_clid_20191029.csv', encoding = "ISO-8859-1")
+#check_rent_clients = pd.read_csv('D:/Models/development/9_rent_house/check_property/real_check_property_model_clid_20191029.csv', encoding = "ISO-8859-1")
 
 check_rent_clients.head()
 check_rent_clients.shape
